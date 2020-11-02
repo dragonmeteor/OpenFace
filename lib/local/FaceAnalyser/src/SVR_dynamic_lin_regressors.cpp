@@ -100,19 +100,19 @@ void SVR_dynamic_lin_regressors::Predict(std::vector<double>& predictions, std::
 	{
 		cv::Mat_<double> preds;
 		if(fhog_descriptor.cols ==  this->means.cols)
-		{
+		{			
 			preds = (fhog_descriptor - this->means - running_median) * this->support_vectors + this->biases;
 		}
 		else
-		{
+		{			
 			cv::Mat_<double> input;
-			cv::hconcat(fhog_descriptor, geom_params, input);
+			cv::hconcat(fhog_descriptor, geom_params, input);			
 
 			cv::Mat_<double> run_med;
 			cv::hconcat(running_median, running_median_geom, run_med);
 
 			preds = (input - this->means - run_med) * this->support_vectors + this->biases;
-		}
+		}		
 
 		for(cv::MatIterator_<double> pred_it = preds.begin(); pred_it != preds.end(); ++pred_it)
 		{		

@@ -44,7 +44,7 @@ using namespace FaceAnalysis;
 FaceAnalyser::FaceAnalyser(const FaceAnalysis::FaceAnalyserParameters& face_analyser_params)
 {
 	this->Read(face_analyser_params.getModelLoc());
-		
+
 	align_mask = face_analyser_params.getAlignMask();
 	align_scale_out = face_analyser_params.getSimScaleOut();
 	align_width_out = face_analyser_params.getSimSizeOut();
@@ -63,7 +63,7 @@ FaceAnalyser::FaceAnalyser(const FaceAnalysis::FaceAnalyserParameters& face_anal
 	num_bins_geom = 10000;
 	max_val_geom = 60;
 	min_val_geom = -60;
-		
+
 	// Keep track for how many frames have been tracked so far
 	frames_tracking = 0;
 
@@ -72,10 +72,10 @@ FaceAnalyser::FaceAnalyser(const FaceAnalysis::FaceAnalyserParameters& face_anal
 
 	out_grayscale = face_analyser_params.grayscale;
 
-	if(face_analyser_params.getOrientationBins().empty())
+	if (face_analyser_params.getOrientationBins().empty())
 	{
 		// Just using frontal currently
-		head_orientations.push_back(cv::Vec3d(0,0,0));
+		head_orientations.push_back(cv::Vec3d(0, 0, 0));
 	}
 	else
 	{
@@ -176,7 +176,7 @@ void FaceAnalyser::GetLatestHOG(cv::Mat_<double>& hog_descriptor, int& num_rows,
 {
 	hog_descriptor = this->hog_desc_frame.clone();
 
-	if(!hog_desc_frame.empty())
+	if (!hog_desc_frame.empty())
 	{
 		num_rows = this->num_hog_rows;
 		num_cols = this->num_hog_cols;
@@ -196,7 +196,7 @@ void FaceAnalyser::GetLatestAlignedFace(cv::Mat& image)
 void FaceAnalyser::GetLatestNeutralHOG(cv::Mat_<double>& hog_descriptor, int& num_rows, int& num_cols)
 {
 	hog_descriptor = this->hog_desc_median;
-	if(!hog_desc_median.empty())
+	if (!hog_desc_median.empty())
 	{
 		num_rows = this->num_hog_rows;
 		num_cols = this->num_hog_cols;
@@ -215,25 +215,25 @@ int GetViewId(const std::vector<cv::Vec3d> orientations_all, const cv::Vec3d& or
 
 	double dbest = -1.0;
 
-	for(size_t i = 0; i < orientations_all.size(); i++)
+	for (size_t i = 0; i < orientations_all.size(); i++)
 	{
-	
+
 		// Distance to current view
 		double d = cv::norm(orientation, orientations_all[i]);
 
-		if(i == 0 || d < dbest)
+		if (i == 0 || d < dbest)
 		{
 			dbest = d;
-			id = (int) i;
+			id = (int)i;
 		}
 	}
 	return id;
-	
+
 }
 
 void FaceAnalyser::PredictStaticAUsAndComputeFeatures(const cv::Mat& frame, const cv::Mat_<float>& detected_landmarks)
 {
-	
+
 	// Extract shape parameters from the detected landmarks
 	cv::Vec6f params_global;
 	cv::Mat_<float> params_local;
@@ -268,11 +268,11 @@ void FaceAnalyser::PredictStaticAUsAndComputeFeatures(const cv::Mat& frame, cons
 
 	cv::Vec3d curr_orient(params_global[1], params_global[2], params_global[3]);
 	int orientation_to_use = GetViewId(this->head_orientations, curr_orient);
-	
+
 	// Geom descriptor and its median, TODO these should be floats?
 	params_local = params_local.t();
 	params_local.convertTo(geom_descriptor_frame, CV_64F);
-	
+
 	cv::Mat_<double> princ_comp_d;
 	pdm.princ_comp.convertTo(princ_comp_d, CV_64F);
 
@@ -280,12 +280,12 @@ void FaceAnalyser::PredictStaticAUsAndComputeFeatures(const cv::Mat& frame, cons
 	cv::Mat_<double> locs = princ_comp_d * geom_descriptor_frame.t();
 
 	cv::hconcat(locs.t(), geom_descriptor_frame.clone(), geom_descriptor_frame);
-	
+
 	// First convert the face image to double representation as a row vector, TODO rem
 	//cv::Mat_<uchar> aligned_face_cols(1, aligned_face_for_au.cols * aligned_face_for_au.rows * aligned_face_for_au.channels(), aligned_face_for_au.data, 1);
 	//cv::Mat_<double> aligned_face_cols_double;
 	//aligned_face_cols.convertTo(aligned_face_cols_double, CV_64F);
-	
+
 	// Perform AU prediction	
 	auto AU_predictions_intensity = PredictCurrentAUs(orientation_to_use);
 	auto AU_predictions_occurence = PredictCurrentAUsClass(orientation_to_use);
@@ -299,7 +299,7 @@ void FaceAnalyser::PredictStaticAUsAndComputeFeatures(const cv::Mat& frame, cons
 		if (AU_predictions_intensity[au].second > 5)
 			AU_predictions_intensity[au].second = 5;
 	}
-	
+
 	AU_predictions_reg = AU_predictions_intensity;
 	AU_predictions_class = AU_predictions_occurence;
 
@@ -315,7 +315,7 @@ void FaceAnalyser::AddNextFrame(const cv::Mat& frame, const cv::Mat_<float>& det
 	cv::Mat_<float> params_local;
 
 	// First align the face if tracking was successfull
-	if(success)
+	if (success)
 	{
 
 		pdm.CalcParams(params_global, params_local, detected_landmarks);
@@ -357,7 +357,7 @@ void FaceAnalyser::AddNextFrame(const cv::Mat& frame, const cv::Mat_<float>& det
 	// Extract HOG descriptor from the frame and convert it to a useable format
 	cv::Mat_<double> hog_descriptor;
 	Extract_FHOG_descriptor(hog_descriptor, aligned_face_for_au, this->num_hog_rows, this->num_hog_cols);
-	
+
 	// Store the descriptor
 	hog_desc_frame = hog_descriptor;
 
@@ -399,17 +399,17 @@ void FaceAnalyser::AddNextFrame(const cv::Mat& frame, const cv::Mat_<float>& det
 		frames_tracking_succ++;
 
 	// A small speedup
-	if(frames_tracking % 2 == 1)
+	if (frames_tracking % 2 == 1)
 	{
 		UpdateRunningMedian(this->hog_desc_hist[orientation_to_use], this->hog_hist_sum[orientation_to_use], this->hog_desc_median, hog_descriptor, update_median, this->num_bins_hog, this->min_val_hog, this->max_val_hog);
 		this->hog_desc_median.setTo(0, this->hog_desc_median < 0);
-	}	
+	}
 
 	// Geom descriptor and its median
 	params_local = params_local.t();
 	params_local.convertTo(geom_descriptor_frame, CV_64F);
 
-	if(!success)
+	if (!success)
 	{
 		geom_descriptor_frame.setTo(0);
 	}
@@ -419,15 +419,15 @@ void FaceAnalyser::AddNextFrame(const cv::Mat& frame, const cv::Mat_<float>& det
 	cv::Mat_<double> princ_comp_d;
 	pdm.princ_comp.convertTo(princ_comp_d, CV_64F);
 	cv::Mat_<double> locs = princ_comp_d * geom_descriptor_frame.t();
-	
+
 	cv::hconcat(locs.t(), geom_descriptor_frame.clone(), geom_descriptor_frame);
-	
+
 	// A small speedup
-	if(frames_tracking % 2 == 1)
+	if (frames_tracking % 2 == 1)
 	{
 		UpdateRunningMedian(this->geom_desc_hist, this->geom_hist_sum, this->geom_descriptor_median, geom_descriptor_frame, update_median, this->num_bins_geom, this->min_val_geom, this->max_val_geom);
 	}
-	
+
 	// Perform AU prediction	
 	AU_predictions_reg = PredictCurrentAUs(orientation_to_use);
 
@@ -437,7 +437,7 @@ void FaceAnalyser::AddNextFrame(const cv::Mat& frame, const cv::Mat_<float>& det
 
 		// Find the appropriate AU (if not found add it)		
 		// Only add if the detection was successful
-		if(success)
+		if (success)
 		{
 			AU_predictions_reg_all_hist[AU_predictions_reg[au].first].push_back(AU_predictions_reg[au].second);
 		}
@@ -449,7 +449,7 @@ void FaceAnalyser::AddNextFrame(const cv::Mat& frame, const cv::Mat_<float>& det
 			AU_predictions_reg[au].second = 0;
 		}
 	}
-	
+
 	AU_predictions_class = PredictCurrentAUsClass(orientation_to_use);
 
 	for (size_t au = 0; au < AU_predictions_class.size(); ++au)
@@ -457,7 +457,7 @@ void FaceAnalyser::AddNextFrame(const cv::Mat& frame, const cv::Mat_<float>& det
 
 		// Find the appropriate AU (if not found add it)		
 		// Only add if the detection was successful
-		if(success)
+		if (success)
 		{
 			AU_predictions_class_all_hist[AU_predictions_class[au].first].push_back(AU_predictions_class[au].second);
 		}
@@ -468,7 +468,7 @@ void FaceAnalyser::AddNextFrame(const cv::Mat& frame, const cv::Mat_<float>& det
 			// Also invalidate AU if not successful
 			AU_predictions_class[au].second = 0;
 		}
-	}	
+	}
 
 	// A workaround for online predictions to make them a bit more accurate
 	std::vector<std::pair<std::string, double>> AU_predictions_reg_corrected;
@@ -489,7 +489,7 @@ void FaceAnalyser::AddNextFrame(const cv::Mat& frame, const cv::Mat_<float>& det
 	this->current_time_seconds = timestamp_seconds;
 
 	view_used = orientation_to_use;
-			
+
 	valid_preds.push_back(success);
 	timestamps.push_back(timestamp_seconds);
 
@@ -503,23 +503,23 @@ void FaceAnalyser::GetGeomDescriptor(cv::Mat_<double>& geom_desc)
 // Perform prediction on initial n frames anew as the current neutral face estimate is better now
 void FaceAnalyser::PostprocessPredictions()
 {
-	if(!postprocessed)
+	if (!postprocessed)
 	{
 		int success_ind = 0;
 		int all_ind = 0;
 		int all_frames_size = (int)timestamps.size();
-		
-		while(all_ind < all_frames_size && success_ind < max_init_frames)
+
+		while (all_ind < all_frames_size && success_ind < max_init_frames)
 		{
-		
-			if(valid_preds[all_ind])
+
+			if (valid_preds[all_ind])
 			{
 
 				this->hog_desc_frame = hog_desc_frames_init[success_ind];
 				this->geom_descriptor_frame = geom_descriptor_frames_init[success_ind];
 
 				// Perform AU prediction	
-				auto AU_predictions_reg = PredictCurrentAUs(views[success_ind]);								
+				auto AU_predictions_reg = PredictCurrentAUs(views[success_ind]);
 
 				// Modify the predictions to the historic data
 				for (size_t au = 0; au < AU_predictions_reg.size(); ++au)
@@ -536,7 +536,7 @@ void FaceAnalyser::PostprocessPredictions()
 					// Find the appropriate AU (if not found add it)		
 					AU_predictions_class_all_hist[AU_predictions_class[au].first][all_ind] = AU_predictions_class[au].second;
 				}
-		
+
 				success_ind++;
 			}
 			all_ind++;
@@ -546,10 +546,10 @@ void FaceAnalyser::PostprocessPredictions()
 	}
 }
 
-void FaceAnalyser::ExtractAllPredictionsOfflineReg(std::vector<std::pair<std::string, std::vector<double>>>& au_predictions, 
+void FaceAnalyser::ExtractAllPredictionsOfflineReg(std::vector<std::pair<std::string, std::vector<double>>>& au_predictions,
 	std::vector<double>& confidences, std::vector<bool>& successes, std::vector<double>& timestamps, bool dynamic)
 {
-	if(dynamic)
+	if (dynamic)
 	{
 		PostprocessPredictions();
 	}
@@ -560,29 +560,29 @@ void FaceAnalyser::ExtractAllPredictionsOfflineReg(std::vector<std::pair<std::st
 	std::vector<std::vector<double>> aus_valid;
 	std::vector<double> offsets;
 	successes = this->valid_preds;
-	
+
 	std::vector<std::string> dyn_au_names = AU_SVR_dynamic_appearance_lin_regressors.GetAUNames();
 
 	// Allow these AUs to be person calirated based on expected number of neutral frames (learned from the data)
-	for(auto au_iter = AU_predictions_reg_all_hist.begin(); au_iter != AU_predictions_reg_all_hist.end(); ++au_iter)
+	for (auto au_iter = AU_predictions_reg_all_hist.begin(); au_iter != AU_predictions_reg_all_hist.end(); ++au_iter)
 	{
 		std::vector<double> au_good;
 		std::string au_name = au_iter->first;
 		std::vector<double> au_vals = au_iter->second;
-		
+
 		au_predictions.push_back(std::pair<std::string, std::vector<double>>(au_name, au_vals));
 
-		for(size_t frame = 0; frame < au_vals.size(); ++frame)
+		for (size_t frame = 0; frame < au_vals.size(); ++frame)
 		{
 
-			if(successes[frame])
+			if (successes[frame])
 			{
 				au_good.push_back(au_vals[frame]);
 			}
 
 		}
 
-		if(au_good.empty() || !dynamic)
+		if (au_good.empty() || !dynamic)
 		{
 			offsets.push_back(0.0);
 		}
@@ -612,29 +612,29 @@ void FaceAnalyser::ExtractAllPredictionsOfflineReg(std::vector<std::pair<std::st
 				offsets.push_back(0);
 			}
 		}
-		
+
 		aus_valid.push_back(au_good);
 	}
-	
+
 	// sort each of the aus and adjust the dynamic ones
-	for(size_t au = 0; au < au_predictions.size(); ++au)
+	for (size_t au = 0; au < au_predictions.size(); ++au)
 	{
 
-		for(size_t frame = 0; frame < au_predictions[au].second.size(); ++frame)
+		for (size_t frame = 0; frame < au_predictions[au].second.size(); ++frame)
 		{
 
-			if(successes[frame])
+			if (successes[frame])
 			{
 				double scaling = 1;
-				
+
 				au_predictions[au].second[frame] = (au_predictions[au].second[frame] - offsets[au]) * scaling;
-				
-				if(au_predictions[au].second[frame] < 0.0)
+
+				if (au_predictions[au].second[frame] < 0.0)
 					au_predictions[au].second[frame] = 0;
 
-				if(au_predictions[au].second[frame] > 5)
+				if (au_predictions[au].second[frame] > 5)
 					au_predictions[au].second[frame] = 5;
-				
+
 			}
 			else
 			{
@@ -667,7 +667,7 @@ void FaceAnalyser::ExtractAllPredictionsOfflineReg(std::vector<std::pair<std::st
 
 }
 
-void FaceAnalyser::ExtractAllPredictionsOfflineClass(std::vector<std::pair<std::string, std::vector<double>>>& au_predictions, 
+void FaceAnalyser::ExtractAllPredictionsOfflineClass(std::vector<std::pair<std::string, std::vector<double>>>& au_predictions,
 	std::vector<double>& confidences, std::vector<bool>& successes, std::vector<double>& timestamps, bool dynamic)
 {
 	if (dynamic)
@@ -678,21 +678,21 @@ void FaceAnalyser::ExtractAllPredictionsOfflineClass(std::vector<std::pair<std::
 	timestamps = this->timestamps;
 	au_predictions.clear();
 
-	for(auto au_iter = AU_predictions_class_all_hist.begin(); au_iter != AU_predictions_class_all_hist.end(); ++au_iter)
+	for (auto au_iter = AU_predictions_class_all_hist.begin(); au_iter != AU_predictions_class_all_hist.end(); ++au_iter)
 	{
 		std::string au_name = au_iter->first;
 		std::vector<double> au_vals = au_iter->second;
-		
+
 		// Perform a moving average of 7 frames on classifications
 		int window_size = 7;
 		std::vector<double> au_vals_tmp = au_vals;
-		if((int)au_vals.size() > (window_size - 1) / 2)
+		if ((int)au_vals.size() > (window_size - 1) / 2)
 		{
-			for (size_t i = (window_size - 1)/2; i < au_vals.size() - (window_size - 1) / 2; ++i)
+			for (size_t i = (window_size - 1) / 2; i < au_vals.size() - (window_size - 1) / 2; ++i)
 			{
 				double sum = 0;
 				int div_by = 0;
-				for (int w = -(window_size - 1) / 2; w <= (window_size - 1) / 2 && (i+w < au_vals_tmp.size()); ++w)
+				for (int w = -(window_size - 1) / 2; w <= (window_size - 1) / 2 && (i + w < au_vals_tmp.size()); ++w)
 				{
 					sum += au_vals_tmp[i + w];
 					div_by++;
@@ -721,7 +721,7 @@ void FaceAnalyser::Reset()
 	this->hog_desc_median.setTo(cv::Scalar(0));
 	this->face_image_median.setTo(cv::Scalar(0));
 
-	for( size_t i = 0; i < hog_desc_hist.size(); ++i)
+	for (size_t i = 0; i < hog_desc_hist.size(); ++i)
 	{
 		this->hog_desc_hist[i] = cv::Mat_<int>(hog_desc_hist[i].rows, hog_desc_hist[i].cols, (int)0);
 		this->hog_hist_sum[i] = 0;
@@ -765,26 +765,26 @@ void FaceAnalyser::UpdateRunningMedian(cv::Mat_<int>& histogram, int& hist_count
 {
 
 	double length = max_val - min_val;
-	if(length < 0)
+	if (length < 0)
 		length = -length;
 
 	// The median update
-	if(histogram.empty())
+	if (histogram.empty())
 	{
 		histogram = cv::Mat_<int>(descriptor.cols, num_bins, (int)0);
 		median = descriptor.clone();
 	}
 
-	if(update)
+	if (update)
 	{
 		// Find the bins corresponding to the current descriptor
-		cv::Mat_<double> converted_descriptor = (descriptor - min_val)*((double)num_bins)/(length);
+		cv::Mat_<double> converted_descriptor = (descriptor - min_val) * ((double)num_bins) / (length);
 
 		// Capping the top and bottom values
-		converted_descriptor.setTo(cv::Scalar(num_bins-1), converted_descriptor > num_bins - 1);
+		converted_descriptor.setTo(cv::Scalar(num_bins - 1), converted_descriptor > num_bins - 1);
 		converted_descriptor.setTo(cv::Scalar(0), converted_descriptor < 0);
 
-		for(int i = 0; i < histogram.rows; ++i)
+		for (int i = 0; i < histogram.rows; ++i)
 		{
 			int index = (int)converted_descriptor.at<double>(i);
 			histogram.at<int>(i, index)++;
@@ -794,25 +794,25 @@ void FaceAnalyser::UpdateRunningMedian(cv::Mat_<int>& histogram, int& hist_count
 		hist_count++;
 	}
 
-	if(hist_count == 1)
+	if (hist_count == 1)
 	{
 		median = descriptor.clone();
 	}
 	else
 	{
 		// Recompute the median
-		int cutoff_point = (hist_count + 1)/2;
+		int cutoff_point = (hist_count + 1) / 2;
 
 		// For each dimension
-		for(int i = 0; i < histogram.rows; ++i)
+		for (int i = 0; i < histogram.rows; ++i)
 		{
 			int cummulative_sum = 0;
-			for(int j = 0; j < histogram.cols; ++j)
+			for (int j = 0; j < histogram.cols; ++j)
 			{
 				cummulative_sum += histogram.at<int>(i, j);
-				if(cummulative_sum >= cutoff_point)
+				if (cummulative_sum >= cutoff_point)
 				{
-					median.at<double>(i) = min_val + ((double)j) * (length/((double)num_bins)) + (0.5*(length)/ ((double)num_bins));
+					median.at<double>(i) = min_val + ((double)j) * (length / ((double)num_bins)) + (0.5 * (length) / ((double)num_bins));
 					break;
 				}
 			}
@@ -825,34 +825,34 @@ void FaceAnalyser::ExtractMedian(cv::Mat_<int>& histogram, int hist_count, cv::M
 {
 
 	double length = max_val - min_val;
-	if(length < 0)
+	if (length < 0)
 		length = -length;
 
 	// The median update
-	if(histogram.empty())
+	if (histogram.empty())
 	{
 		return;
 	}
 	else
 	{
-		if(median.empty())
+		if (median.empty())
 		{
 			median = cv::Mat_<double>(1, histogram.rows, 0.0);
 		}
 
 		// Compute the median
-		int cutoff_point = (hist_count + 1)/2;
+		int cutoff_point = (hist_count + 1) / 2;
 
 		// For each dimension
-		for(int i = 0; i < histogram.rows; ++i)
+		for (int i = 0; i < histogram.rows; ++i)
 		{
 			int cummulative_sum = 0;
-			for(int j = 0; j < histogram.cols; ++j)
+			for (int j = 0; j < histogram.cols; ++j)
 			{
 				cummulative_sum += histogram.at<int>(i, j);
-				if(cummulative_sum > cutoff_point)
+				if (cummulative_sum > cutoff_point)
 				{
-					median.at<double>(i) = min_val + j * (max_val/num_bins) + (0.5*(length)/num_bins);
+					median.at<double>(i) = min_val + j * (max_val / num_bins) + (0.5 * (length) / num_bins);
 					break;
 				}
 			}
@@ -862,17 +862,17 @@ void FaceAnalyser::ExtractMedian(cv::Mat_<int>& histogram, int hist_count, cv::M
 // Apply the current predictors to the currently stored descriptors
 std::vector<std::pair<std::string, double>> FaceAnalyser::PredictCurrentAUs(int view)
 {
-
 	std::vector<std::pair<std::string, double>> predictions;
 
-	if(!hog_desc_frame.empty())
+	if (!hog_desc_frame.empty())
 	{
 		std::vector<std::string> svr_lin_stat_aus;
 		std::vector<double> svr_lin_stat_preds;
 
 		AU_SVR_static_appearance_lin_regressors.Predict(svr_lin_stat_preds, svr_lin_stat_aus, hog_desc_frame, geom_descriptor_frame);
 
-		for(size_t i = 0; i < svr_lin_stat_preds.size(); ++i)
+
+		for (size_t i = 0; i < svr_lin_stat_preds.size(); ++i)
 		{
 			predictions.push_back(std::pair<std::string, double>(svr_lin_stat_aus[i], svr_lin_stat_preds[i]));
 		}
@@ -880,9 +880,9 @@ std::vector<std::pair<std::string, double>> FaceAnalyser::PredictCurrentAUs(int 
 		std::vector<std::string> svr_lin_dyn_aus;
 		std::vector<double> svr_lin_dyn_preds;
 
-		AU_SVR_dynamic_appearance_lin_regressors.Predict(svr_lin_dyn_preds, svr_lin_dyn_aus, hog_desc_frame, geom_descriptor_frame,  this->hog_desc_median, this->geom_descriptor_median);
+		AU_SVR_dynamic_appearance_lin_regressors.Predict(svr_lin_dyn_preds, svr_lin_dyn_aus, hog_desc_frame, geom_descriptor_frame, this->hog_desc_median, this->geom_descriptor_median);		
 
-		for(size_t i = 0; i < svr_lin_dyn_preds.size(); ++i)
+		for (size_t i = 0; i < svr_lin_dyn_preds.size(); ++i)
 		{
 			predictions.push_back(std::pair<std::string, double>(svr_lin_dyn_aus[i], svr_lin_dyn_preds[i]));
 		}
@@ -892,7 +892,7 @@ std::vector<std::pair<std::string, double>> FaceAnalyser::PredictCurrentAUs(int 
 	return predictions;
 }
 
-std::vector<std::pair<std::string, double>> FaceAnalyser::CorrectOnlineAUs(std::vector<std::pair<std::string, double>> predictions_orig, 
+std::vector<std::pair<std::string, double>> FaceAnalyser::CorrectOnlineAUs(std::vector<std::pair<std::string, double>> predictions_orig,
 	int view, bool dyn_shift, bool dyn_scale, bool update_track, bool clip_values)
 {
 	// Correction that drags the predicion to 0 (assuming the bottom 10% of predictions are of neutral expresssions)
@@ -900,55 +900,55 @@ std::vector<std::pair<std::string, double>> FaceAnalyser::CorrectOnlineAUs(std::
 
 	std::vector<std::pair<std::string, double>> predictions = predictions_orig;
 
-	if(update_track)
+	if (update_track)
 	{
 		UpdatePredictionTrack(au_prediction_correction_histogram[view], au_prediction_correction_count[view], correction, predictions, 0.10, 200, -3, 5, 10);
 	}
 
-	if(dyn_shift)
+	if (dyn_shift)
 	{
-		for(size_t i = 0; i < correction.size(); ++i)
+		for (size_t i = 0; i < correction.size(); ++i)
 		{
 			predictions[i].second = predictions[i].second - correction[i];
 		}
 	}
-	if(dyn_scale)
+	if (dyn_scale)
 	{
 		// Some scaling for effect better visualisation
 		// Also makes sense as till the maximum expression is seen, it is hard to tell how expressive a persons face is
-		if(dyn_scaling[view].empty())
+		if (dyn_scaling[view].empty())
 		{
 			dyn_scaling[view] = std::vector<double>(predictions.size(), 5.0);
 		}
-		
-		for(size_t i = 0; i < predictions.size(); ++i)
+
+		for (size_t i = 0; i < predictions.size(); ++i)
 		{
 			// First establish presence (assume it is maximum as we have not seen max) 
-			if(predictions[i].second > 1)
+			if (predictions[i].second > 1)
 			{
 				double scaling_curr = 5.0 / predictions[i].second;
-				
-				if(scaling_curr < dyn_scaling[view][i])
+
+				if (scaling_curr < dyn_scaling[view][i])
 				{
 					dyn_scaling[view][i] = scaling_curr;
 				}
 				predictions[i].second = predictions[i].second * dyn_scaling[view][i];
 			}
 
-			if(predictions[i].second > 5)
+			if (predictions[i].second > 5)
 			{
 				predictions[i].second = 5;
 			}
 		}
 	}
 
-	if(clip_values)
+	if (clip_values)
 	{
-		for(size_t i = 0; i < correction.size(); ++i)
+		for (size_t i = 0; i < correction.size(); ++i)
 		{
-			if(predictions[i].second < 0)
+			if (predictions[i].second < 0)
 				predictions[i].second = 0;
-			if(predictions[i].second > 5)
+			if (predictions[i].second > 5)
 				predictions[i].second = 5;
 		}
 	}
@@ -961,14 +961,14 @@ std::vector<std::pair<std::string, double>> FaceAnalyser::PredictCurrentAUsClass
 
 	std::vector<std::pair<std::string, double>> predictions;
 
-	if(!hog_desc_frame.empty())
+	if (!hog_desc_frame.empty())
 	{
 		std::vector<std::string> svm_lin_stat_aus;
 		std::vector<double> svm_lin_stat_preds;
-		
+
 		AU_SVM_static_appearance_lin.Predict(svm_lin_stat_preds, svm_lin_stat_aus, hog_desc_frame, geom_descriptor_frame);
 
-		for(size_t i = 0; i < svm_lin_stat_aus.size(); ++i)
+		for (size_t i = 0; i < svm_lin_stat_aus.size(); ++i)
 		{
 			predictions.push_back(std::pair<std::string, double>(svm_lin_stat_aus[i], svm_lin_stat_preds[i]));
 		}
@@ -978,11 +978,11 @@ std::vector<std::pair<std::string, double>> FaceAnalyser::PredictCurrentAUsClass
 
 		AU_SVM_dynamic_appearance_lin.Predict(svm_lin_dyn_preds, svm_lin_dyn_aus, hog_desc_frame, geom_descriptor_frame, this->hog_desc_median, this->geom_descriptor_median);
 
-		for(size_t i = 0; i < svm_lin_dyn_aus.size(); ++i)
+		for (size_t i = 0; i < svm_lin_dyn_aus.size(); ++i)
 		{
 			predictions.push_back(std::pair<std::string, double>(svm_lin_dyn_aus[i], svm_lin_dyn_preds[i]));
 		}
-		
+
 	}
 
 	return predictions;
@@ -1080,10 +1080,10 @@ static void split(const std::string& str, std::vector<std::string>& out, char de
 }
 
 // Trim the end of a string (in place)
-static void rtrim(std::string &s) {
+static void rtrim(std::string& s) {
 	s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) {
 		return !std::isspace(ch);
-	}).base(), s.end());
+		}).base(), s.end());
 }
 
 // Reading in AU prediction modules
@@ -1093,7 +1093,7 @@ void FaceAnalyser::ReadAU(std::string au_model_location)
 	// Open the list of the regressors in the file
 	std::ifstream locations(au_model_location.c_str(), std::ios::in);
 
-	if(!locations.is_open())
+	if (!locations.is_open())
 	{
 		std::cout << "Couldn't open the AU prediction files at: " << au_model_location.c_str() << " aborting" << std::endl;
 		std::cout.flush();
@@ -1101,14 +1101,14 @@ void FaceAnalyser::ReadAU(std::string au_model_location)
 	}
 
 	std::string line;
-	
+
 	// The other module locations should be defined as relative paths from the main model
-	fs::path root = fs::path(au_model_location).parent_path();		
-	
+	fs::path root = fs::path(au_model_location).parent_path();
+
 	// The main file contains the references to other files
 	while (!locations.eof())
-	{ 
-		
+	{
+
 		getline(locations, line);
 
 		std::stringstream lineStream(line);
@@ -1123,9 +1123,9 @@ void FaceAnalyser::ReadAU(std::string au_model_location)
 		name = lineStream.str();
 		int index = (int)name.find_first_of(' ');
 
-		if(index >= 0)
+		if (index >= 0)
 		{
-			name = name.substr(index+1);
+			name = name.substr(index + 1);
 			// remove carriage return at the end for compatibility with unix systems
 			name.erase(name.find_last_not_of(" \n\r\t") + 1);
 		}
@@ -1134,37 +1134,37 @@ void FaceAnalyser::ReadAU(std::string au_model_location)
 
 		// append the lovstion to root location (boost syntax)
 		location = (root / location).string();
-				
+
 		ReadRegressor(location, au_names);
 	}
-  
+
 }
 
-void FaceAnalyser::UpdatePredictionTrack(cv::Mat_<int>& prediction_corr_histogram, int& prediction_correction_count, 
-	std::vector<double>& correction, const std::vector<std::pair<std::string, double>>& predictions, double ratio, int num_bins, 
+void FaceAnalyser::UpdatePredictionTrack(cv::Mat_<int>& prediction_corr_histogram, int& prediction_correction_count,
+	std::vector<double>& correction, const std::vector<std::pair<std::string, double>>& predictions, double ratio, int num_bins,
 	double min_val, double max_val, int min_frames)
 {
 	double length = max_val - min_val;
-	if(length < 0)
+	if (length < 0)
 		length = -length;
 
 	correction.resize(predictions.size(), 0);
 
 	// The median update
-	if(prediction_corr_histogram.empty())
+	if (prediction_corr_histogram.empty())
 	{
 		prediction_corr_histogram = cv::Mat_<int>((int)predictions.size(), num_bins, (int)0);
 	}
-	
-	for(int i = 0; i < prediction_corr_histogram.rows; ++i)
+
+	for (int i = 0; i < prediction_corr_histogram.rows; ++i)
 	{
 		// Find the bins corresponding to the current descriptor
-		int index = (int)((predictions[i].second - min_val)*((double)num_bins)/(length));
-		if(index < 0)
+		int index = (int)((predictions[i].second - min_val) * ((double)num_bins) / (length));
+		if (index < 0)
 		{
 			index = 0;
 		}
-		else if(index > num_bins - 1)
+		else if (index > num_bins - 1)
 		{
 			index = num_bins - 1;
 		}
@@ -1174,21 +1174,21 @@ void FaceAnalyser::UpdatePredictionTrack(cv::Mat_<int>& prediction_corr_histogra
 	// Update the histogram count
 	prediction_correction_count++;
 
-	if(prediction_correction_count >= min_frames)
+	if (prediction_correction_count >= min_frames)
 	{
 		// Recompute the correction
 		int cutoff_point = (int)(ratio * prediction_correction_count);
 
 		// For each dimension
-		for(int i = 0; i < prediction_corr_histogram.rows; ++i)
+		for (int i = 0; i < prediction_corr_histogram.rows; ++i)
 		{
 			int cummulative_sum = 0;
-			for(int j = 0; j < prediction_corr_histogram.cols; ++j)
+			for (int j = 0; j < prediction_corr_histogram.cols; ++j)
 			{
 				cummulative_sum += prediction_corr_histogram.at<int>(i, j);
-				if(cummulative_sum > cutoff_point)
+				if (cummulative_sum > cutoff_point)
 				{
-					double corr = min_val + j * (length/num_bins);
+					double corr = min_val + j * (length / num_bins);
 					correction[i] = corr;
 					break;
 				}
@@ -1202,7 +1202,7 @@ void FaceAnalyser::GetSampleHist(cv::Mat_<int>& prediction_corr_histogram, int p
 {
 
 	double length = max_val - min_val;
-	if(length < 0)
+	if (length < 0)
 		length = -length;
 
 	sample.resize(prediction_corr_histogram.rows, 0);
@@ -1211,15 +1211,15 @@ void FaceAnalyser::GetSampleHist(cv::Mat_<int>& prediction_corr_histogram, int p
 	int cutoff_point = (int)(ratio * prediction_correction_count);
 
 	// For each dimension
-	for(int i = 0; i < prediction_corr_histogram.rows; ++i)
+	for (int i = 0; i < prediction_corr_histogram.rows; ++i)
 	{
 		int cummulative_sum = 0;
-		for(int j = 0; j < prediction_corr_histogram.cols; ++j)
+		for (int j = 0; j < prediction_corr_histogram.cols; ++j)
 		{
 			cummulative_sum += prediction_corr_histogram.at<int>(i, j);
-			if(cummulative_sum > cutoff_point)
+			if (cummulative_sum > cutoff_point)
 			{
-				double corr = min_val + j * (length/num_bins);
+				double corr = min_val + j * (length / num_bins);
 				sample[i] = corr;
 				break;
 			}
@@ -1346,7 +1346,7 @@ void FaceAnalyser::PostprocessOutputFile(std::string output_file)
 	outfile << std::fixed;
 	outfile << std::noshowpoint;
 
-	outfile << output_file_contents[0].c_str() << "\n";
+	outfile << output_file_contents[0].c_str() << std::endl;
 
 	// Write the contents
 	for (int i = 1; i < (int)output_file_contents.size(); ++i)
@@ -1363,20 +1363,20 @@ void FaceAnalyser::PostprocessOutputFile(std::string output_file)
 			{
 				if (t - begin_ind < num_reg)
 				{
-					outfile << "," << predictions_reg[inds_reg[t - begin_ind]].second[i - 1];
+					outfile << ", " << predictions_reg[inds_reg[t - begin_ind]].second[i - 1];
 				}
 				else
 				{
-					outfile << "," << predictions_class[inds_class[t - begin_ind - num_reg]].second[i - 1];
+					outfile << ", " << predictions_class[inds_class[t - begin_ind - num_reg]].second[i - 1];
 				}
 			}
 			else
 			{
 				rtrim(tokens[t]);
-				outfile << "," << tokens[t];
+				outfile << ", " << tokens[t];
 			}
 		}
-		outfile << "\n";
+		outfile << std::endl;
 	}
 
 

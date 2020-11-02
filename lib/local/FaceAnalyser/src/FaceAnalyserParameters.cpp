@@ -68,6 +68,8 @@ FaceAnalyserParameters::FaceAnalyserParameters(std::vector<std::string> &argumen
 	bool scale_set = false;
 	bool size_set = false;
 
+	fs::path face_analyser_dir = fs::path();
+
 	for (size_t i = 1; i < arguments.size(); ++i)
 	{
 		valid[i] = true;
@@ -101,6 +103,14 @@ FaceAnalyserParameters::FaceAnalyserParameters(std::vector<std::string> &argumen
 			valid[i] = false;
 			valid[i + 1] = false;
 			size_set = true;
+			i++;
+		}
+		else if (arguments[i].compare("-face_analyser_dir") == 0) 
+		{
+			std::string dir = arguments[i + 1];
+			face_analyser_dir = fs::path(dir);
+			valid[i] = false;
+			valid[i + 1] = false;
 			i++;
 		}
 	}
@@ -140,6 +150,10 @@ FaceAnalyserParameters::FaceAnalyserParameters(std::vector<std::string> &argumen
 	else if (fs::exists(config_path/model_path))
 	{
 		this->model_location = (config_path/model_path).string();
+	}
+	else if (fs::exists(face_analyser_dir / model_path))
+	{
+		this->model_location = (face_analyser_dir / model_path).string();
 	}
 	else
 	{

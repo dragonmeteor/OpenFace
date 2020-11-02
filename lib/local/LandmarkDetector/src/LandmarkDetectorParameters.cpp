@@ -66,6 +66,8 @@ FaceModelParameters::FaceModelParameters(std::vector<std::string> &arguments)
 	bool* valid = new bool[arguments.size()];
 	valid[0] = true;
 
+	fs::path landmark_detector_dir = fs::path();
+
 	for (size_t i = 1; i < arguments.size(); ++i)
 	{
 		valid[i] = true;
@@ -163,6 +165,13 @@ FaceModelParameters::FaceModelParameters(std::vector<std::string> &arguments)
 			// Use multi-view hypotheses if in-the-wild setting
 			multi_view = true;
 		}
+		else if (arguments[i].compare("-landmark_detector_dir") == 0) {
+			std::string dir = arguments[i + 1];
+			landmark_detector_dir = fs::path(dir);
+			valid[i] = false;
+			valid[i + 1] = false;
+			i++;
+		}
 	}
 
 	for (int i = (int)arguments.size() - 1; i >= 0; --i)
@@ -189,6 +198,10 @@ FaceModelParameters::FaceModelParameters(std::vector<std::string> &arguments)
 	else if (fs::exists(config_path/model_path))
 	{
 		model_location = (config_path/model_path).string();
+	}
+	else if (fs::exists(landmark_detector_dir / model_path)) 
+	{
+		model_location = (landmark_detector_dir / model_path).string();
 	}
 	else
 	{
@@ -225,6 +238,10 @@ FaceModelParameters::FaceModelParameters(std::vector<std::string> &arguments)
 	{
 		haar_face_detector_location = (config_path / model_path).string();
 	}
+	else if (fs::exists(landmark_detector_dir / model_path)) 
+	{
+		haar_face_detector_location = (landmark_detector_dir / model_path).string();
+	}
 	else
 	{
 		std::cout << "Could not find the HAAR face detector location" << std::endl;
@@ -244,6 +261,10 @@ FaceModelParameters::FaceModelParameters(std::vector<std::string> &arguments)
 	else if (fs::exists(config_path / model_path))
 	{
 		mtcnn_face_detector_location = (config_path / model_path).string();
+	}
+	else if (fs::exists(landmark_detector_dir / model_path)) 
+	{
+		mtcnn_face_detector_location = (landmark_detector_dir / model_path).string();
 	}
 	else
 	{
